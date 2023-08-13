@@ -75,7 +75,6 @@
     "helmet": "^7.0.0",
     "intl-parse-accept-language": "^1.0.0",
     "isbot": "^3.6.12",
-    "litefs-js": "^1.1.2",
     "lru-cache": "^10.0.0",
     "morgan": "^1.10.0",
     "prisma": "^5.0.0",
@@ -142,7 +141,7 @@
     "vitest": "^0.33.0"
   },
   "engines": {
-    "node": "18"
+    "node": ">=20"
   },
   "epic-stack": true,
   "prisma": {

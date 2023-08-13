@@ -18,11 +18,6 @@ import {
 	searchCacheKeys,
 } from '~/utils/cache.server.ts'
 import {
-	getAllInstances,
-	getInstanceInfo,
-	ensureInstance,
-} from '~/utils/litefs.server.ts'
-import {
 	invariantResponse,
 	useDebounce,
 	useDoubleCheck,
@@ -39,33 +34,23 @@ export async function loader({ request }: DataFunctionArgs) {
 	}
 	const limit = Number(searchParams.get('limit') ?? 100)
 
-	const currentInstanceInfo = await getInstanceInfo()
-	const instance =
-		searchParams.get('instance') ?? currentInstanceInfo.currentInstance
-	const instances = await getAllInstances()
-	await ensureInstance(instance)
-
 	let cacheKeys: { sqlite: Array<string>; lru: Array<string> }
 	if (typeof query === 'string') {
 		cacheKeys = await searchCacheKeys(query, limit)
 	} else {
 		cacheKeys = await getAllCacheKeys(limit)
 	}
-	return json({ cacheKeys, instance, instances, currentInstanceInfo })
+	return json({ cacheKeys })
 }
 
 export async function action({ request }: DataFunctionArgs) {
 	await requireAdmin(request)
 	const formData = await request.formData()
 	const key = formData.get('cacheKey')
-	const { currentInstance } = await getInstanceInfo()
-	const instance = formData.get('instance') ?? currentInstance
 	const type = formData.get('type')
 
 	invariantResponse(typeof key === 'string', 'cacheKey must be a string')
 	invariantResponse(typeof type === 'string', 'type must be a string')
-	invariantResponse(typeof instance === 'string', 'instance must be a string')
-	await ensureInstance(instance)
 
 	switch (type) {
 		case 'sqlite': {
@@ -89,7 +74,6 @@ export default function CacheAdminRoute() {
 	const submit = useSubmit()
 	const query = searchParams.get('query') ?? ''
 	const limit = searchParams.get('limit') ?? '100'
-	const instance = searchParams.get('instance') ?? data.instance
 
 	const handleFormChange = useDebounce((form: HTMLFormElement) => {
 		submit(form)
@@ -128,40 +112,6 @@ export default function CacheAdminRoute() {
 						</div>
 					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-4">
-					<Field
-						labelProps={{
-							children: 'Limit',
-						}}
-						inputProps={{
-							name: 'limit',
-							defaultValue: limit,
-							type: 'number',
-							step: '1',
-							min: '1',
-							max: '10000',
-							placeholder: 'results limit',
-						}}
-					/>
-					<select name="instance" defaultValue={instance}>
-						{Object.entries(data.instances).map(([inst, region]) => (
-							<option key={inst} value={inst}>
-								{[
-									inst,
-									`(${region})`,
-									inst === data.currentInstanceInfo.currentInstance
-										? '(current)'
-										: '',
-									inst === data.currentInstanceInfo.primaryInstance
-										? ' (primary)'
-										: '',
-								]
-									.filter(Boolean)
-									.join(' ')}
-							</option>
-						))}
-					</select>
-				</div>
 			</Form>
 			<Spacer size="2xs" />
 			<div className="flex flex-col gap-4">
@@ -170,7 +120,6 @@ export default function CacheAdminRoute() {
 					<CacheKeyRow
 						key={key}
 						cacheKey={key}
-						instance={instance}
 						type="lru"
 					/>
 				))}
@@ -182,7 +131,6 @@ export default function CacheAdminRoute() {
 					<CacheKeyRow
 						key={key}
 						cacheKey={key}
-						instance={instance}
 						type="sqlite"
 					/>
 				))}
@@ -193,22 +141,19 @@ export default function CacheAdminRoute() {
 
 function CacheKeyRow({
 	cacheKey,
-	instance,
 	type,
 }: {
 	cacheKey: string
-	instance?: string
 	type: 'sqlite' | 'lru'
 }) {
 	const fetcher = useFetcher<typeof action>()
 	const dc = useDoubleCheck()
 	const encodedKey = encodeURIComponent(cacheKey)
-	const valuePage = `/admin/cache/${type}/${encodedKey}?instance=${instance}`
+	const valuePage = `/admin/cache/${type}/${encodedKey}
 	return (
 		<div className="flex items-center gap-2 font-mono">
 			<fetcher.Form method="post">
 				<input type="hidden" name="cacheKey" value={cacheKey} />
-				<input type="hidden" name="instance" value={instance} />
 				<input type="hidden" name="type" value={type} />
 				<Button
 					size="sm"
