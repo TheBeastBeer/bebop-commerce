@@ -112,6 +112,22 @@ export default function CacheAdminRoute() {
 						</div>
 					</div>
 				</div>
+				<div className="flex flex-wrap items-center gap-4">
+					<Field
+						labelProps={{
+							children: 'Limit',
+						}}
+						inputProps={{
+							name: 'limit',
+							defaultValue: limit,
+							type: 'number',
+							step: '1',
+							min: '1',
+							max: '10000',
+							placeholder: 'results limit',
+						}}
+					/>
+					</div>
 			</Form>
 			<Spacer size="2xs" />
 			<div className="flex flex-col gap-4">

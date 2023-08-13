@@ -92,8 +92,8 @@ export const cache: CachifiedCache = {
 			})
 	},
 	async delete(key) {
-		cacheDb.prepare('DELETE FROM cache WHERE key = ?').run(key),
-	}
+		cacheDb.prepare('DELETE FROM cache WHERE key = ?').run(key)
+	},
 }
 
 export async function getAllCacheKeys(limit: number) {
