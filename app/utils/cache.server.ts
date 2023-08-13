@@ -12,7 +12,6 @@ import {
 } from 'cachified'
 import { LRUCache } from 'lru-cache'
 import { z } from 'zod'
-import { updatePrimaryCacheValue } from '~/routes/admin+/cache_.sqlite.tsx'
 import { singleton } from './singleton.server.ts'
 import { cachifiedTimingReporter, type Timings } from './timing.server.ts'
 
@@ -94,6 +93,7 @@ export const cache: CachifiedCache = {
 	},
 	async delete(key) {
 		cacheDb.prepare('DELETE FROM cache WHERE key = ?').run(key),
+	}
 }
 
 export async function getAllCacheKeys(limit: number) {

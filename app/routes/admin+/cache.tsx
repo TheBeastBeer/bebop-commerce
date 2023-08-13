@@ -149,7 +149,7 @@ function CacheKeyRow({
 	const fetcher = useFetcher<typeof action>()
 	const dc = useDoubleCheck()
 	const encodedKey = encodeURIComponent(cacheKey)
-	const valuePage = `/admin/cache/${type}/${encodedKey}
+	const valuePage = `/admin/cache/${type}/${encodedKey}`
 	return (
 		<div className="flex items-center gap-2 font-mono">
 			<fetcher.Form method="post">
