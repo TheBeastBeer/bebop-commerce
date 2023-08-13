@@ -20,6 +20,8 @@ const CACHE_DATABASE_PATH = process.env.CACHE_DATABASE_PATH
 const cacheDb = singleton('cacheDb', createDatabase)
 
 function createDatabase(tryAgain = true): BetterSqlite3.Database {
+	const db = new Database(CACHE_DATABASE_PATH)
+	
 	try {
 		// create cache table with metadata JSON column and value JSON column if it does not exist already
 		db.exec(`
