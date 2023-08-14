@@ -11,7 +11,7 @@ processes = [ ]
   entrypoint = "sh"
 
 [mounts]
-  source = "data"
+  source = "myapp_data"
   destination = "/data"
 
 # [deploy]
