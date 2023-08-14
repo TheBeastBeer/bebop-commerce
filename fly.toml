@@ -12,8 +12,8 @@ processes = [ ]
   source = "myapp_data"
   destination = "/data"
 
-# [deploy]
-#  release_command = "node ./other/sentry-create-release"
+[deploy]
+  release_command = "node ./other/sentry-create-release"
 
 [[services]]
   internal_port = 8080

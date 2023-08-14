@@ -43,6 +43,18 @@ let devBuild = build
 
 const app = express()
 
+// Use Fly assigned client IP for rate limiting
+app.use(rateLimit({
+	keyGenerator(req, _res): string {
+		if (req.headers['Fly-Client-IP']) {
+			console.log(`Fly says your IP is ${req.headers['Fly-Client-IP']}`)
+			return String(req.headers['Fly-Client-IP'])
+		}
+		return req.ip
+	}
+})
+)
+
 const getHost = (req: { get: (key: string) => string | undefined }) =>
 	req.get('X-Forwarded-Host') ?? req.get('host') ?? ''
 
