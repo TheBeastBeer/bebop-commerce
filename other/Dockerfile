@@ -63,4 +63,7 @@ COPY --from=build /myapp/start.sh /myapp/start.sh
 COPY --from=build /myapp/prisma /myapp/prisma
 COPY --from=build /myapp/app/components/ui/icons /myapp/app/components/ui/icons
 
-ENTRYPOINT [ "./start.sh" ]
+# See if 
+ADD . .
+
+CMD [ "npm", "run", "up" ]
