@@ -92,6 +92,8 @@ export async function loader({ request }: DataFunctionArgs) {
 		desc: 'getUserId in root',
 	})
 
+	const flyIP = request.headers.get('Fly-Client-IP')
+
 	const user = userId
 		? await time(
 				() =>
@@ -112,6 +114,7 @@ export async function loader({ request }: DataFunctionArgs) {
 
 	return json(
 		{
+			flyIP,
 			user,
 			requestInfo: {
 				hints: getHints(request),
@@ -220,6 +223,7 @@ function App() {
 						<div className="font-light">epic</div>
 						<div className="font-bold">notes</div>
 					</Link>
+					<span>{data.flyIP}</span>
 					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 				</div>
 			</div>

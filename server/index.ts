@@ -43,18 +43,6 @@ let devBuild = build
 
 const app = express()
 
-// Use Fly assigned client IP for rate limiting
-// But not if in dev or during testing
-app.use(rateLimit({
-	keyGenerator(req, _res): string {
-		if (req.headers['Fly-Client-IP'] && MODE === 'production' && !process.env.PLAYWRIGHT_TEST_BASE_URL) {
-			return String(req.headers['Fly-Client-IP'])
-		}
-		return req.ip
-	}
-})
-)
-
 const getHost = (req: { get: (key: string) => string | undefined }) =>
 	req.get('X-Forwarded-Host') ?? req.get('host') ?? ''
 
@@ -167,7 +155,10 @@ const strongRateLimit = rateLimit({
 	max: 100 * maxMultiple,
 })
 
-const generalRateLimit = rateLimit(rateLimitDefault)
+const generalRateLimit = rateLimit({
+	...rateLimitDefault,
+	// keyGenerator: req => String(req.headers['Fly-Client-IP']) || req.ip,
+})
 app.use((req, res, next) => {
 	const strongPaths = [
 		'/login',
