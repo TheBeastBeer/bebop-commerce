@@ -44,10 +44,10 @@ let devBuild = build
 const app = express()
 
 // Use Fly assigned client IP for rate limiting
+// But not if in dev or during testing
 app.use(rateLimit({
 	keyGenerator(req, _res): string {
-		if (req.headers['Fly-Client-IP']) {
-			console.log(`Fly says your IP is ${req.headers['Fly-Client-IP']}`)
+		if (req.headers['Fly-Client-IP'] && MODE === 'production' && !process.env.PLAYWRIGHT_TEST_BASE_URL) {
 			return String(req.headers['Fly-Client-IP'])
 		}
 		return req.ip
