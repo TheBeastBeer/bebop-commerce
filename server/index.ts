@@ -2,10 +2,6 @@ import crypto from 'crypto'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import {
-	createRequestHandler as _createRequestHandler,
-	type RequestHandler,
-} from '@remix-run/express'
-import {
 	broadcastDevReady,
 	installGlobals,
 	type ServerBuild,
@@ -22,10 +18,13 @@ import getPort, { portNumbers } from 'get-port'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import sourceMapSupport from 'source-map-support'
+import { nanoid } from 'nanoid'
 
 // @ts-ignore - this file may not exist if you haven't built yet, but it will
 // definitely exist by the time the dev or prod server actually runs.
 import * as remixBuild from '../build/index.js'
+import { createRequestHandler as _createRequestHandler } from './server.js'
+import { sessionStorage } from './session.js'
 
 sourceMapSupport.install()
 installGlobals()
@@ -141,6 +140,8 @@ const rateLimitDefault = {
 	max: 1000 * maxMultiple,
 	standardHeaders: true,
 	legacyHeaders: false,
+	// @ts-ignore `req` doesn't exist yet, but definitely will when we use it
+	keyGenerator: req => String(req.headers['Fly-Client-IP']) || req.ip,
 }
 
 const strongestRateLimit = rateLimit({
@@ -155,10 +156,8 @@ const strongRateLimit = rateLimit({
 	max: 100 * maxMultiple,
 })
 
-const generalRateLimit = rateLimit({
-	...rateLimitDefault,
-	// keyGenerator: req => String(req.headers['Fly-Client-IP']) || req.ip,
-})
+const generalRateLimit = rateLimit(rateLimitDefault)
+
 app.use((req, res, next) => {
 	const strongPaths = [
 		'/login',
@@ -187,19 +186,37 @@ app.use((req, res, next) => {
 	return generalRateLimit(req, res, next)
 })
 
-function getRequestHandler(build: ServerBuild): RequestHandler {
-	function getLoadContext(_: any, res: any) {
-		return { cspNonce: res.locals.cspNonce }
-	}
-	return createRequestHandler({ build, mode: MODE, getLoadContext })
-}
+app.all('*', async (req, res, next) => {
+	const session = await sessionStorage.getSession(req.headers.cookie)
+	const cookies = String(req.headers.cookie)
 
-app.all(
-	'*',
-	MODE === 'development'
-		? (...args) => getRequestHandler(devBuild)(...args)
-		: getRequestHandler(build),
-)
+	if (!session.get('sessionId')) {
+		session.set('sessionId', nanoid())
+	}
+
+	function getLoadContext(req: express.Request, res: express.Response) {
+		return {
+			cspNonce: res.locals.cspNonce,
+			reqIP: req.ip,
+			session,
+			cookies,
+		}
+	}
+
+	if (MODE === 'development' ) {
+		return createRequestHandler({
+			build: devBuild, 
+			mode: MODE,
+			getLoadContext,
+		})(req, res, next)
+	} else {
+		return createRequestHandler({
+			build: build, 
+			mode: MODE,
+			getLoadContext,
+		})(req, res, next)
+	}
+})
 
 const desiredPort = Number(process.env.PORT || 3000)
 const portToUse = await getPort({

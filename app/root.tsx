@@ -1,10 +1,10 @@
 import { cssBundleHref } from '@remix-run/css-bundle'
 import {
 	json,
-	type DataFunctionArgs,
 	type HeadersFunction,
 	type LinksFunction,
 	type V2_MetaFunction,
+	type LoaderArgs,
 } from '@remix-run/node'
 import {
 	Form,
@@ -84,7 +84,7 @@ export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
 	]
 }
 
-export async function loader({ request }: DataFunctionArgs) {
+export async function loader({ request, context }: LoaderArgs) {
 	const timings = makeTimings('root loader')
 	const userId = await time(() => getUserId(request), {
 		timings,
@@ -92,7 +92,9 @@ export async function loader({ request }: DataFunctionArgs) {
 		desc: 'getUserId in root',
 	})
 
-	const flyIP = request.headers.get('Fly-Client-IP')
+	const flyIP = request.headers.get('Fly-Client-IP') ?? 'Not Set'
+	const reqIP = String(context.reqIP) ?? 'Not Set'
+	const sessionName = String(context.session.get('sessionId')) ?? 'Not Set'
 
 	const user = userId
 		? await time(
@@ -115,6 +117,8 @@ export async function loader({ request }: DataFunctionArgs) {
 	return json(
 		{
 			flyIP,
+			reqIP,
+			sessionName,
 			user,
 			requestInfo: {
 				hints: getHints(request),
@@ -223,7 +227,7 @@ function App() {
 						<div className="font-light">epic</div>
 						<div className="font-bold">notes</div>
 					</Link>
-					<span>{data.flyIP}</span>
+					<span><strong>{data.sessionName}:</strong> req.ip: {data.reqIP} - Fly-Client-IP: {data.flyIP}</span>
 					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 				</div>
 			</div>

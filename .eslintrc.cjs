@@ -19,7 +19,7 @@ module.exports = {
 			},
 		],
 		'import/no-duplicates': ['warn', { 'prefer-inline': true }],
-		'import/consistent-type-specifier-style': ['warn', 'prefer-inline'],
+		// 'import/consistent-type-specifier-style': ['warn', 'prefer-inline'],
 		'import/order': [
 			'warn',
 			{
